@@ -11,7 +11,7 @@ from app.config import get_chat_model
 router = APIRouter()
 
 # Set the tesseract executable path manually
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe" # update this path as per your installation
 
 
 
