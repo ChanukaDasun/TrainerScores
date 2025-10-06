@@ -98,6 +98,7 @@ also install tesseract-ocr-w64-setup-5.5.0.20241111 and set its path as environm
 ```bash
 cd backend
 python -m venv myenv
+myenv\Scripts\activate
 pip install -r requirements.txt
 python -m app.services.embeddings
 uvicorn app.main:app --reload
