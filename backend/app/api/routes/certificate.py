@@ -3,10 +3,11 @@ from io import BytesIO
 import requests
 from PIL import Image
 import pytesseract
-from app.models.certificate_schema import ReadCertificateRequest, CertificateResponse
+from app.models.certificate_schema import ReadCertificateRequest, CertificateResponse, CertificateScoreResponse
 from app.services.preprocess import preprocess_image
 from app.services.scoring import get_relevance_score
 from app.config import get_chat_model
+import re
 
 router = APIRouter()
 
@@ -36,7 +37,7 @@ def read_certificate(certificate: ReadCertificateRequest) -> CertificateResponse
 
 
 @router.post("/score")
-def generate_score(certificate: ReadCertificateRequest) -> CertificateResponse:
+def generate_score(certificate: ReadCertificateRequest) -> CertificateScoreResponse:
     if not certificate.certificate_path:
         raise HTTPException(status_code=400, detail="Certificate path is required")
 
@@ -52,7 +53,20 @@ def generate_score(certificate: ReadCertificateRequest) -> CertificateResponse:
         print(f"preprocessed json data: {json_data}")
 
         image_score = get_relevance_score(json_data, llm)
-        print(f"Generated score: {image_score}")  
-        return CertificateResponse(certificate_text=str(image_score.content))
+        print(f"Generated score: {image_score}")
+
+        # pharse the score and reasoning from the llm response
+        raw_text = image_score.content.strip() if hasattr(image_score, "content") else str(image_score)
+        print(f"Raw LLM response: {raw_text}")
+
+        # Step 5: Parse Reasoning and Score
+        reasoning_match = re.search(r"Reasoning:\s*(.+?)(?:\n|$)", raw_text, re.DOTALL)
+        score_match = re.search(r"Score:\s*([\d.]+)", raw_text)
+
+        reasoning = reasoning_match.group(1).strip() if reasoning_match else "No reasoning found."
+        score = float(score_match.group(1)) if score_match else 0.0
+
+        return CertificateScoreResponse(reasoning=reasoning, score=score)
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
