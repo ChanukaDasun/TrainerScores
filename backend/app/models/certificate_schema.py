@@ -6,3 +6,7 @@ class ReadCertificateRequest(BaseModel):
 
 class CertificateResponse(BaseModel):
     certificate_text: str
+
+class CertificateScoreResponse(BaseModel):
+    reasoning: str
+    score: float

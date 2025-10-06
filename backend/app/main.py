@@ -8,7 +8,11 @@ app = FastAPI()
 
 # Allow frontend origins
 app.add_middleware(
-    CORSMiddleware
+    CORSMiddleware,
+    allow_origins=["*"],  # or ["http://localhost:3000"] for security
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # initialize the chat model
