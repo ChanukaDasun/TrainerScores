@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException
 from io import BytesIO
 import requests
 from PIL import Image
@@ -36,13 +36,11 @@ def read_certificate(certificate: ReadCertificateRequest) -> CertificateResponse
 
 
 @router.post("/score")
-def generate_score(request: Request, certificate: ReadCertificateRequest) -> CertificateResponse:
+def generate_score(certificate: ReadCertificateRequest) -> CertificateResponse:
     if not certificate.certificate_path:
         raise HTTPException(status_code=400, detail="Certificate path is required")
 
     try:
-        db = request.app.state.db
-        print(f"here is the db: {db}")
         response = requests.get(certificate.certificate_path)
         response.raise_for_status()  # raise if download fails
         image = Image.open(BytesIO(response.content))
@@ -53,7 +51,7 @@ def generate_score(request: Request, certificate: ReadCertificateRequest) -> Cer
         json_data = preprocess_image(text, llm) # preprocessed data from certificate
         print(f"preprocessed json data: {json_data}")
 
-        image_score = get_relevance_score(json_data, db, llm)
+        image_score = get_relevance_score(json_data, llm)
         print(f"Generated score: {image_score}")  
         return CertificateResponse(certificate_text=str(image_score.content))
     except Exception as e:

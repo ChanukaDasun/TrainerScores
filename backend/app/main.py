@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException # raise HTTPException(status_code=400, detail="Bad Request")
 from app.api import router as api_router
-from app.config import get_chat_model, VECTOR_STORE_DIR
-from app.services.embeddings import load_vectorstore
+from app.config import get_chat_model
 from fastapi.middleware.cors import CORSMiddleware
+from app.services.weaviate_vectorstore import weaviate_client
 
 app = FastAPI()
 
@@ -23,9 +23,12 @@ def root():
 def startup_event():
     print("🚀 Starting up the application...")
     try:
-        print(f"🔗 Loading vector store from: {VECTOR_STORE_DIR}")
-        app.state.db = load_vectorstore()
+        print(f"🔗 Loading vector store")
+        client = weaviate_client()
+        if "Rag_collection" not in client.collections.list_all().keys():
+            print("❌ Error while loading vector store")
         print("✅ Vector store loaded and ready.")
+        client.close()
     except Exception as e:
         print(f"❌ Error loading vector store: {e}")
         raise HTTPException(status_code=500, detail="Failed to load vector store")

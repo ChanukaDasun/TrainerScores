@@ -7,11 +7,12 @@ from pathlib import Path
 load_dotenv()
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+WEAVIATE_URL = os.getenv("WEAVIATE_URL")
+WEAVIATE_KEY = os.getenv("WEAVIATE_KEY")
 
 # knowledge base directory
 KB_DIR = Path(__file__).resolve().parent / "data" / "knowledge_base"
-# vector store directory
-VECTOR_STORE_DIR = Path(__file__).resolve().parent / "data" / "vector_store"
+
 
 def get_chat_model():
     llm = ChatGoogleGenerativeAI(
