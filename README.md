@@ -97,10 +97,10 @@ also install tesseract-ocr-w64-setup-5.5.0.20241111 and set its path as environm
 ### Backend Setup
 ```bash
 cd backend
-python -m venv myenv (to create python virtual environment for first time -> to activate it "myenv\Scripts\activate" : to deactivate it "deactivate")
+python -m venv myenv
 pip install -r requirements.txt
-python -m app.services.embeddings (run this command only when you use this app for the first time)
-uvicorn app.main:app --reload (strat fast api backend)
+python -m app.services.embeddings
+uvicorn app.main:app --reload
 ```
 
 ### Frontend Setup
