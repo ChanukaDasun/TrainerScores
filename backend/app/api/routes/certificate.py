@@ -12,7 +12,7 @@ import re
 router = APIRouter()
 
 # Set the tesseract executable path manually
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe" # Update this path as your installation path
 
 
 
