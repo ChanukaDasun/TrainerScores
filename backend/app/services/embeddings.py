@@ -90,11 +90,12 @@ def load_vectorstore():
     return db
 
 # main execution
-def main():
+def embeddings_main():
     documents = generate_documents_from_images(image_paths)
     text = convert_doc_to_text(documents)
     text_chunks = chunk_text(text)
 
     db = embed_and_save(text_chunks)
 
-main()
+if __name__ == "__main__": 
+  embeddings_main()
