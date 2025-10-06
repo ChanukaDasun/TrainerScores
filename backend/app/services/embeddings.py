@@ -1,11 +1,10 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
 from PIL import Image
 import pytesseract
-from app.config import KB_DIR, VECTOR_STORE_DIR
+from app.config import KB_DIR
 from app.services.preprocess import preprocess_image as preprocess
 from app.config import get_chat_model
+from app.services.weaviate_vectorstore import weaviate_client
 
 image_paths = [
     KB_DIR / "1628163810175.jpeg", 
@@ -25,7 +24,7 @@ image_paths = [
     KB_DIR / "ipt-.jpg"
 ]
 
-def generate_documents_from_images(image_paths):
+def generate_documents_from_images(image_paths : list[str]):
   documents = []
   print(f"🔄️ Extracting and preprocessed documents from images....")
   for img_path in image_paths:
@@ -64,30 +63,30 @@ def chunk_text(text):
   return text_chunks
 
 
-def embed_and_save(text_chunks):
-    # Initialize embeddings model
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+def embed_and_save(text_chunks : list[str]):
+    client = weaviate_client()
+    collection = client.collections.use("Rag_collection")
 
-    # Create the Chroma database from text chunks
-    db = Chroma.from_texts(
-        texts=text_chunks,
-        embedding=embeddings,
-        persist_directory=str(VECTOR_STORE_DIR)
-    )
+    with collection.batch.fixed_size(batch_size=200) as batch:
+      for text_chunk in text_chunks:
+          batch.add_object(
+              properties = {
+                  "content": text_chunk,
+              }
+          )
+          if batch.number_errors > 10:
+              print("Batch import stopped due to excessive errors.")
+              break
 
-    # Save to disk
-    db.persist()
-    print(f"✅ Vector store created and saved at: {VECTOR_STORE_DIR}")
-    return db
+    failed_objects = collection.batch.failed_objects
+    if failed_objects:
+        print(f"Number of failed imports: {len(failed_objects)}")
+        print(f"First failed object: {failed_objects[0]}")
 
-def load_vectorstore():
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    db = Chroma(
-        persist_directory=str(VECTOR_STORE_DIR),
-        embedding_function=embeddings
-    )
-    print("📂 Vector store loaded successfully")
-    return db
+    print(f"✅ saved successfully embeddings to weaviate {collection.name}")
+
+    client.close()
+
 
 # main execution
 def embeddings_main():
@@ -95,7 +94,7 @@ def embeddings_main():
     text = convert_doc_to_text(documents)
     text_chunks = chunk_text(text)
 
-    db = embed_and_save(text_chunks)
+    embed_and_save(text_chunks)
 
 if __name__ == "__main__": 
   embeddings_main()

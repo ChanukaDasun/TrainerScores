@@ -1,11 +1,25 @@
-from app.services.embeddings import generate_documents_from_images
+from app.services.embeddings import generate_documents_from_images, convert_doc_to_text
+from app.services.weaviate_vectorstore import weaviate_client
+from weaviate.classes.query import MetadataQuery
 
-def get_relevance_score(json_data, db, llm):
+def get_relevance_score(json_data, llm):
+  # load vector store
+  client = weaviate_client()
+  collection = client.collections.use("Rag_collection")
+
+  query = convert_doc_to_text([json_data])
+
+  query = " ".join(query)
+  print(f"query for vector store: {query}")
+
   # retrive relevent chunks
-  context_for_new_doc = db.similarity_search(str(json_data), k=2)
+  context_for_new_doc = collection.query.hybrid(query=query, limit=10, alpha=0.3)
   print(f"similar context for inputed image: {context_for_new_doc}")
-  input_doc_text = " ".join([d.page_content for d in context_for_new_doc])
+  input_doc_text = " ".join([obj.properties["content"] for obj in context_for_new_doc.objects])
+
   context = input_doc_text
+
+  print(f"context for llm: {context}")
 
   # define the prompt template
   query_template = f"""
@@ -36,4 +50,5 @@ def get_relevance_score(json_data, db, llm):
   Score: <number between 1 and 10>
   """
   answer = llm.invoke(query_template)
+  client.close()
   return answer
